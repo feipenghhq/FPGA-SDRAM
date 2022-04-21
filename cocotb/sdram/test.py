@@ -11,6 +11,10 @@
 import cocotb
 from cocotb.triggers import Timer
 
+from env import Env
+
 @cocotb.test()
 async def test_initialization(dut):
-    await Timer(100, units = "ns")
+    env = Env(dut, dut.clk)
+    await env.setup()
+    await Timer(200, units = "us")

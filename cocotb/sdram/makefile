@@ -10,9 +10,12 @@ PWD = $(shell pwd)
 SIM ?= icarus
 TOPLEVEL_LANG ?= verilog
 
-VERILOG_SOURCES += $(GIT_ROOT)/rtl/sdram/core/avalon_sdram_controller.v
+VERILOG_SOURCES += $(GIT_ROOT)/rtl/sdram/avalon_sdram_controller.sv
+VERILOG_SOURCES += $(GIT_ROOT)/cocotb/sdr_sdram/sdr_parameters.vh
+VERILOG_SOURCES += $(GIT_ROOT)/cocotb/sdr_sdram/sdr.v
+VERILOG_SOURCES += $(GIT_ROOT)/cocotb/sdram/sdram_tb_top.sv
 
-TOPLEVEL = avalon_sdram_controller
+TOPLEVEL = sdram_tb_top
 
 MODULE  = test
 
@@ -23,7 +26,7 @@ COMPILE_ARGS += -Dx16
 
 # Include path
 COMPILE_ARGS += -I$(GIT_ROOT)/cocotb/sdr_sdram
-COMPILE_ARGS += -I$(GIT_ROOT)/rtl/sdram/core
+COMPILE_ARGS += -I$(GIT_ROOT)/rtl/sdram
 
 DUMP ?= 0
 ifeq ($(DUMP), 1)
