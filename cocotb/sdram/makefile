@@ -10,7 +10,10 @@ PWD = $(shell pwd)
 SIM ?= icarus
 TOPLEVEL_LANG ?= verilog
 
+# source file
+VERILOG_SOURCES += $(GIT_ROOT)/rtl/sdram/sdram_init.sv
 VERILOG_SOURCES += $(GIT_ROOT)/rtl/sdram/avalon_sdram_controller.sv
+# testbench file
 VERILOG_SOURCES += $(GIT_ROOT)/cocotb/sdr_sdram/sdr_parameters.vh
 VERILOG_SOURCES += $(GIT_ROOT)/cocotb/sdr_sdram/sdr.v
 VERILOG_SOURCES += $(GIT_ROOT)/cocotb/sdram/sdram_tb_top.sv

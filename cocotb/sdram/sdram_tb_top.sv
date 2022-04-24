@@ -13,7 +13,7 @@ module sdram_top (
   input               avs_write,
   output              avs_waitrequest,
   input      [24:0]   avs_address,
-  input      [3:0]    avs_byteenable,
+  input      [1:0]    avs_byteenable,
   input      [15:0]   avs_writedata,
   output              avs_readdatavalid,
   output     [15:0]   avs_readdata,
@@ -21,9 +21,9 @@ module sdram_top (
   input               reset
 );
 
-  logic     [15:0]   sdram_dq_read;
-  logic     [15:0]   sdram_dq_write;
-  logic              sdram_dq_en;
+  wire     [15:0]   sdram_dq_read;
+  wire     [15:0]   sdram_dq_write;
+  wire              sdram_dq_en;
 
 
   assign sdram_dq      = sdram_dq_en ? sdram_dq_write : 16'bz;
@@ -38,7 +38,7 @@ module sdram_tb_top (
   input               avs_write,
   output              avs_waitrequest,
   input      [24:0]   avs_address,
-  input      [3:0]    avs_byteenable,
+  input      [1:0]    avs_byteenable,
   input      [15:0]   avs_writedata,
   output              avs_readdatavalid,
   output     [15:0]   avs_readdata,
@@ -46,27 +46,26 @@ module sdram_tb_top (
   input               reset
 );
 
-  logic [0:0]    sdram_cs_n;
-  logic          sdram_ras_n;
-  logic          sdram_cas_n;
-  logic          sdram_we_n;
-  logic [12:0]   sdram_addr;
-  logic [1:0]    sdram_ba;
-  wire  [15:0]   sdram_dq;
-  logic [1:0]    sdram_dqm;
-  logic          sdram_cke;
 
- `include "sdr_parameters.vh"
+  wire [0:0]    sdram_cs_n;
+  wire          sdram_ras_n;
+  wire          sdram_cas_n;
+  wire          sdram_we_n;
+  wire [12:0]   sdram_addr;
+  wire [1:0]    sdram_ba;
+  wire [15:0]   sdram_dq;
+  wire [1:0]    sdram_dqm;
+  wire          sdram_cke;
 
-  logic                      Clk;
-  logic                      Cke;
-  logic                      Cs_n;
-  logic                      Ras_n;
-  logic                      Cas_n;
-  logic                      We_n;
-  logic  [ADDR_BITS - 1 : 0] Addr;
-  logic    [BA_BITS - 1 : 0] Ba;
-  logic    [DM_BITS - 1 : 0] Dqm;
+  wire                      Clk;
+  wire                      Cke;
+  wire                      Cs_n;
+  wire                      Ras_n;
+  wire                      Cas_n;
+  wire                      We_n;
+  wire  [ADDR_BITS - 1 : 0] Addr;
+  wire    [BA_BITS - 1 : 0] Ba;
+  wire    [DM_BITS - 1 : 0] Dqm;
 
   assign Addr    = sdram_addr;
   assign Ba      = sdram_ba;
