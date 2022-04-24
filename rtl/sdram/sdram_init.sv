@@ -40,8 +40,8 @@ module sdram_init(
     // Signal Declaration
     // --------------------------------
 
-    reg [INIT_CYCLE_WIDTH-1:0]  counter;
-    reg [INIT_REF_CNT_WIDTH]    refresh_counter;
+    reg [INIT_CYCLE_WIDTH-1:0]      counter;
+    reg [INIT_REF_CNT_WIDTH-1:0]    refresh_counter;
 
     logic counter_fire;
     logic refresh_counter_fire;
@@ -123,9 +123,9 @@ module sdram_init(
 
     // output function logic
     always @* begin
-        counter_load = 0;
-        counter_value = 0;
-        sdram_addr = 0;
+        counter_load = '0;
+        counter_value = 'x;
+        sdram_addr = 'x;
         {sdram_cs_n, sdram_ras_n, sdram_cas_n, sdram_we_n} = SDRAM_CMD_NOP; // NOP
         case(1)
             // S_INIT_IDLE

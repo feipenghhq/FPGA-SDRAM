@@ -8,7 +8,11 @@
  * ---------------------------------------------------------------
  */
 
-module avalon_sdram_controller(
+module avalon_sdram_controller #(
+    parameter CMD_FIFO_SIZE     = 4,
+    parameter WRITE_FIFO_SIZE   = 4,
+    parameter READ_FIFO_SIZE    = 4
+) (
     // SDRAM signal
     sdram_cs_n, sdram_ras_n, sdram_cas_n, sdram_we_n, sdram_addr, sdram_ba,
     sdram_dq_read, sdram_dq_write, sdram_dq_en, sdram_dqm, sdram_cke,
@@ -62,6 +66,28 @@ module avalon_sdram_controller(
     logic [SDRAM_ADDR_WIDTH-1:0]		init_sdram_addr;
 
 
+    logic [SDRAM_DATA_WIDTH-1:0]        access_sdram_dq_read;
+    logic [SDRAM_ADDR_WIDTH-1:0]        access_sdram_addr;
+    logic [SDRAM_BANK_WIDTH-1:0]        access_sdram_ba;
+    logic		                        access_sdram_cas_n;
+    logic		                        access_sdram_cke;
+    logic		                        access_sdram_cs_n;
+    logic		                        access_sdram_dq_en;
+    logic [SDRAM_DATA_WIDTH-1:0]        access_sdram_dq_write;
+    logic [SDRAM_DQM_WIDTH-1:0]         access_sdram_dqm;
+    logic		                        access_sdram_ras_n;
+    logic		                        access_sdram_we_n;
+
+    logic [AVS_AW-1:0]	                bus_req_address;
+    logic [AVS_BYTE-1:0]                bus_req_byteenable;
+    logic		                        bus_req_valid;
+    logic		                        bus_req_write;
+    logic [AVS_DW-1:0]	                bus_req_writedata;
+    logic		                        bus_req_ready;
+
+    logic [AVS_DW-1:0]	                bus_resp_readdata;
+    logic		                        bus_resp_valid;
+
     /*AUTOREG*/
     // Beginning of automatic regs (for this module's undeclared outputs)
     reg [AVS_DW-1:0]	avs_readdata;
@@ -71,11 +97,13 @@ module avalon_sdram_controller(
 
     /*AUTOWIRE*/
 
+    /*AUTOREGINPUT*/
 
     // --------------------------------
     // main Logic
     // --------------------------------
 
+    // Select between the initialzation logic and control logic
     always @(posedge clk) begin
         if(reset) begin
             sdram_cs_n      <= 1'b1;
@@ -91,16 +119,24 @@ module avalon_sdram_controller(
         end
         else begin
             if (init_done) begin
-
-
+                sdram_cs_n      <= access_sdram_cs_n;
+                sdram_ras_n     <= access_sdram_ras_n;
+                sdram_cas_n     <= access_sdram_cas_n;
+                sdram_we_n      <= access_sdram_we_n;
+                sdram_cke       <= access_sdram_cke;
+                sdram_addr      <= access_sdram_addr;
+                sdram_ba        <= access_sdram_ba;
+                sdram_dq_write  <= access_sdram_dq_write;
+                sdram_dqm       <= access_sdram_dqm;
+                sdram_dq_en     <= access_sdram_dq_en;
             end
             else begin
-                sdram_cas_n <= init_sdram_cas_n;
-                sdram_cke   <= init_sdram_cke;
-                sdram_cs_n  <= init_sdram_cs_n;
-                sdram_ras_n <= init_sdram_ras_n;
-                sdram_we_n  <= init_sdram_we_n;
-                sdram_addr  <= init_sdram_addr;
+                sdram_cas_n     <= init_sdram_cas_n;
+                sdram_cke       <= init_sdram_cke;
+                sdram_cs_n      <= init_sdram_cs_n;
+                sdram_ras_n     <= init_sdram_ras_n;
+                sdram_we_n      <= init_sdram_we_n;
+                sdram_addr      <= init_sdram_addr;
             end
         end
     end
@@ -110,23 +146,57 @@ module avalon_sdram_controller(
     // Module initialization
     // --------------------------------
 
+    // SDRAM initialization module
     /* sdram_init AUTO_TEMPLATE (
             .\(sdram_.*\)   (init_\1[]),
         );
     */
-    sdram_init u_sdram_init(/*AUTOINST*/
-			    // Outputs
-			    .init_done		(init_done),
-			    .sdram_cs_n		(init_sdram_cs_n), // Templated
-			    .sdram_ras_n	(init_sdram_ras_n), // Templated
-			    .sdram_cas_n	(init_sdram_cas_n), // Templated
-			    .sdram_we_n		(init_sdram_we_n), // Templated
-			    .sdram_cke		(init_sdram_cke), // Templated
-			    .sdram_addr		(init_sdram_addr[SDRAM_ADDR_WIDTH-1:0]), // Templated
-			    // Inputs
-			    .reset		(reset),
-			    .clk		(clk));
+    sdram_init
+    u_sdram_init (/*AUTOINST*/
+		  // Outputs
+		  .init_done		(init_done),
+		  .sdram_cs_n		(init_sdram_cs_n),	 // Templated
+		  .sdram_ras_n		(init_sdram_ras_n),	 // Templated
+		  .sdram_cas_n		(init_sdram_cas_n),	 // Templated
+		  .sdram_we_n		(init_sdram_we_n),	 // Templated
+		  .sdram_cke		(init_sdram_cke),	 // Templated
+		  .sdram_addr		(init_sdram_addr[SDRAM_ADDR_WIDTH-1:0]), // Templated
+		  // Inputs
+		  .reset		(reset),
+		  .clk			(clk));
 
+
+    // SDRAM read/write module
+    /* sdram_access AUTO_TEMPLATE (
+            .\(sdram_.*\)   (access_\1[]),
+        );
+    */
+    sdram_access
+    u_sdram_access (/*AUTOINST*/
+		    // Outputs
+		    .sdram_cs_n		(access_sdram_cs_n),	 // Templated
+		    .sdram_ras_n	(access_sdram_ras_n),	 // Templated
+		    .sdram_cas_n	(access_sdram_cas_n),	 // Templated
+		    .sdram_we_n		(access_sdram_we_n),	 // Templated
+		    .sdram_cke		(access_sdram_cke),	 // Templated
+		    .sdram_addr		(access_sdram_addr[SDRAM_ADDR_WIDTH-1:0]), // Templated
+		    .sdram_ba		(access_sdram_ba[SDRAM_BANK_WIDTH-1:0]), // Templated
+		    .sdram_dq_write	(access_sdram_dq_write[SDRAM_DATA_WIDTH-1:0]), // Templated
+		    .sdram_dqm		(access_sdram_dqm[SDRAM_DQM_WIDTH-1:0]), // Templated
+		    .sdram_dq_en	(access_sdram_dq_en),	 // Templated
+		    .bus_req_ready	(bus_req_ready),
+		    .bus_resp_valid	(bus_resp_valid),
+		    .bus_resp_readdata	(bus_resp_readdata[AVS_DW-1:0]),
+		    // Inputs
+		    .reset		(reset),
+		    .clk		(clk),
+		    .init_done		(init_done),
+		    .sdram_dq_read	(access_sdram_dq_read[SDRAM_DATA_WIDTH-1:0]), // Templated
+		    .bus_req_valid	(bus_req_valid),
+		    .bus_req_write	(bus_req_write),
+		    .bus_req_address	(bus_req_address[AVS_AW-1:0]),
+		    .bus_req_writedata	(bus_req_writedata[AVS_DW-1:0]),
+		    .bus_req_byteenable	(bus_req_byteenable[AVS_BYTE-1:0]));
 
     // --------------------------------
     // Others
@@ -137,6 +207,7 @@ module avalon_sdram_controller(
             display_parameter();
         end
     `endif
+
 endmodule
 
 
