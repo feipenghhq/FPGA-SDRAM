@@ -13,6 +13,7 @@ TOPLEVEL_LANG ?= verilog
 # source file
 VERILOG_SOURCES += $(GIT_ROOT)/rtl/sdram/sdram_init.sv
 VERILOG_SOURCES += $(GIT_ROOT)/rtl/sdram/sdram_access.sv
+VERILOG_SOURCES += $(GIT_ROOT)/rtl/sdram/sdram_fifo.sv
 VERILOG_SOURCES += $(GIT_ROOT)/rtl/sdram/avalon_sdram_controller.sv
 # testbench file
 VERILOG_SOURCES += $(GIT_ROOT)/cocotb/sdr_sdram/sdr_parameters.vh
