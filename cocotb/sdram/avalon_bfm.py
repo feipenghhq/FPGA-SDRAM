@@ -74,7 +74,7 @@ class AvalonBFM(BusDriver):
         # send the read request
         self.bus.read.value = 1
         self.bus.address.value = address
-        self.bus.byteenable = byteenable
+        self.bus.byteenable.value = byteenable
         # wait for the waitrequest
         await self._wait_for_nsignal(self.bus.waitrequest)
         # de-assert read
@@ -86,8 +86,10 @@ class AvalonBFM(BusDriver):
 
     async def _monitor_read(self):
         while True:
-            await self._wait_for_signal(self.bus.readdatavalid)
-            data = self.bus.readdata.value.integer
-            self.entity.log.debug(f"[Avalon BFM] Get read data {hex(data)}")
-            self.readdata.append(data)
+            await RisingEdge(self.clock)
+            await ReadOnly()
+            if self.bus.readdatavalid.value == 1:
+                data = self.bus.readdata.value.integer
+                self.entity.log.debug(f"[Avalon BFM] Get read data {hex(data)}")
+                self.readdata.append(data)
 

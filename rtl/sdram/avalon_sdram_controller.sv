@@ -116,11 +116,6 @@ module avalon_sdram_controller #(
     logic                               write_fifo_full;
 
     /*AUTOREG*/
-    // Beginning of automatic regs (for this module's undeclared outputs)
-    reg [AVS_DW-1:0]    avs_readdata;
-    reg                 avs_readdatavalid;
-    reg                 avs_waitrequest;
-    // End of automatics
 
     /*AUTOWIRE*/
 
@@ -149,6 +144,8 @@ module avalon_sdram_controller #(
     assign avs_readdatavalid = read_fifo_pop;
     assign avs_waitrequest = cmd_fifo_full;
     assign avs_readdata = read_fifo_dout;
+
+    assign access_sdram_dq_read = sdram_dq_read;
 
     // Select between the initialzation logic and control logic
     always @(posedge clk) begin

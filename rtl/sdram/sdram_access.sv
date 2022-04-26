@@ -80,8 +80,8 @@ module sdram_access (
     localparam S_IDLE           = 0,
                S_ACTIVE         = 1,
                S_ACTIVE_WAIT    = 2,
-               S_READ           = 3,
-               S_READ_WAIT      = 4,
+               S_READ_WAIT      = 3,
+               S_READ           = 4,
                S_WRITE          = 5,
                S_WRITE_WAIT     = 6,
                S_PRECHARGE      = 7,
@@ -140,7 +140,7 @@ module sdram_access (
             state[S_ACTIVE]: begin
                 if (counter_fire) begin
                     if (req_is_write)   state_next[S_WRITE] = 1'b1;
-                    else                state_next[S_READ] = 1'b1;
+                    else                state_next[S_READ_WAIT] = 1'b1;
                 end
                 else                    state_next[S_ACTIVE] = 1'b1;
             end
@@ -159,6 +159,18 @@ module sdram_access (
             state[S_WRITE_WAIT]: begin
                 if (counter_fire)       state_next[S_PRECHARGE] = 1'b1;
                 else                    state_next[S_WRITE_WAIT] = 1'b1;
+            end
+            // S_READ_WAIT
+            state[S_READ_WAIT]: begin
+                if (counter_fire)       state_next[S_READ] = 1'b1;
+                else                    state_next[S_READ_WAIT] = 1'b1;
+            end
+            // S_READ
+            // For simplicity, we schedule the precharge at the end of the read cycle.
+            // But ideally this can be optimzied based on sdram data sheet
+            state[S_READ]: begin
+                if (counter_fire)       state_next[S_PRECHARGE] = 1'b1;
+                else                    state_next[S_READ] = 1'b1;
             end
             // S_PRECHARGE
             state[S_PRECHARGE]: begin
@@ -185,6 +197,9 @@ module sdram_access (
         sdram_dq_write = 'x;
 
         bus_req_ready = 1'b0;
+
+        bus_resp_readdata = 'x;
+        bus_resp_valid = 1'b0;
 
         case(1)
             // S_IDLE
@@ -214,7 +229,8 @@ module sdram_access (
                         counter_value = SDRAM_BL - 1;
                     end
                     else begin  // -> Read
-                        // TBD
+                        {sdram_cs_n, sdram_ras_n, sdram_cas_n, sdram_we_n} = SDRAM_CMD_READ; // READ
+                        counter_value = CL - 1;
                     end
                 end
             end
@@ -234,6 +250,25 @@ module sdram_access (
             end
             // S_WRITE_WAIT
             state[S_WRITE_WAIT]: begin
+                if (counter_fire) begin
+                    {sdram_cs_n, sdram_ras_n, sdram_cas_n, sdram_we_n} = SDRAM_CMD_PRECHARGE; // PRECHARGE
+                    sdram_addr[10] = 1'b1; // precharge all
+                    counter_load = 1'b1;
+                    counter_value = tRP_CYCLE - 1;
+                end
+            end
+            // S_READ_WAIT
+            state[S_READ_WAIT]: begin
+                if (counter_fire) begin
+                    counter_load = 1'b1;
+                    counter_value = SDRAM_BL - 1;
+                end
+            end
+            // S_READ
+            state[S_READ]: begin
+                // Here we only read 1 data at a time
+                bus_resp_readdata = sdram_dq_read;
+                bus_resp_valid = 1'b1;
                 if (counter_fire) begin
                     {sdram_cs_n, sdram_ras_n, sdram_cas_n, sdram_we_n} = SDRAM_CMD_PRECHARGE; // PRECHARGE
                     sdram_addr[10] = 1'b1; // precharge all

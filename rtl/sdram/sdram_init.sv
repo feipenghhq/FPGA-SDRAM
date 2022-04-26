@@ -170,5 +170,3 @@ module sdram_init(
     end
 
 endmodule
-
-

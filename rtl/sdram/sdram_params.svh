@@ -27,7 +27,7 @@
     // SDRAM Timing
     parameter CLK_PERIOD    = 10;       // Clock period in ns
     parameter INIT_REF_CNT  = 2;        // Refresh count in initialization process
-    parameter CL            = 2;
+    parameter CL            = 2;        // CAS latency (cycle)
     parameter tINIT         = 100;      // Initialization time (us)
     parameter tRAS          = 42;       // ACTIVE-to-PRECHARGE command (ns)
     parameter tRC           = 60;       // ACTIVE-to-ACTIVE command period (ns)
