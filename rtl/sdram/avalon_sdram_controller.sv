@@ -98,6 +98,8 @@ module avalon_sdram_controller #(
     logic [CMD_FIFO_WIDTH-1:0]          cmd_fifo_dout;
     logic                               cmd_fifo_full;
     logic                               cmd_fifo_empty;
+    logic                               cmd_fifo_push;
+    logic                               cmd_fifo_pop;
 
     logic [READ_FIFO_WIDTH-1:0]         read_fifo_dout;
     logic                               read_fifo_empty;

@@ -126,6 +126,7 @@ module sdram_init(
         counter_load = '0;
         counter_value = 'x;
         sdram_addr = 'x;
+        sdram_cke = 1'b1;
         {sdram_cs_n, sdram_ras_n, sdram_cas_n, sdram_we_n} = SDRAM_CMD_NOP; // NOP
         case(1)
             // S_INIT_IDLE
@@ -145,20 +146,24 @@ module sdram_init(
                 if (counter_fire && refresh_counter_fire) begin
                     {sdram_cs_n, sdram_ras_n, sdram_cas_n, sdram_we_n} = SDRAM_CMD_REFRESH;   // REFRESH
                     counter_load = 1'b1;
-                    counter_value = tRP_CYCLE - 1;
+                    counter_value = tRFC_CYCLE - 1;
                 end
             end
             state[S_INIT_REFRESH]: begin
                 if (counter_fire && !refresh_counter_fire)  begin
                     {sdram_cs_n, sdram_ras_n, sdram_cas_n, sdram_we_n} = SDRAM_CMD_REFRESH;   // REFRESH
+                    counter_load = 1'b1;
+                    counter_value = tRFC_CYCLE - 1;
                 end
                 else if (counter_fire && refresh_counter_fire) begin
-                    {sdram_cs_n, sdram_ras_n, sdram_cas_n, sdram_we_n} = SDRAM_CMD_REFRESH;   // LMR
+                    {sdram_cs_n, sdram_ras_n, sdram_cas_n, sdram_we_n} = SDRAM_CMD_LMR;   // LMR
                     sdram_addr[2:0] = MR_BURST_LENGTH;
                     sdram_addr[3]   = MR_BURST_TYPE;
                     sdram_addr[6:4] = CL;
                     sdram_addr[8:7] = 0;
                     sdram_addr[9]   = MR_WRITE_BURST_MODE;
+                    counter_load = 1'b1;
+                    counter_value = tMRD_CYCLE - 1;
                 end
             end
         endcase

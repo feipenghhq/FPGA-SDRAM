@@ -108,6 +108,16 @@ module sdram_access (
         end
     end
 
+    always @(posedge clk) begin
+        if (reset) begin
+            counter <= 'b0;
+        end
+        else begin
+            if (counter_load) counter <= counter_value;
+            else if (counter != 0) counter <= counter - 1'b1;
+        end
+    end
+
     // state transition
     always @(posedge clk) begin
         if (reset) begin
@@ -168,14 +178,18 @@ module sdram_access (
         counter_load = '0;
         counter_value = 'x;
 
+        sdram_cke = 1'b1;
         sdram_addr = 'x;
         sdram_ba = 'x;
         sdram_dq_en = '0;
         sdram_dq_write = 'x;
 
+        bus_req_ready = 1'b0;
+
         case(1)
             // S_IDLE
             state[S_IDLE]: begin
+                bus_req_ready = 1'b1;
                 if (bus_req_valid) begin
                     {sdram_cs_n, sdram_ras_n, sdram_cas_n, sdram_we_n} = SDRAM_CMD_ACTIVE; // ACTIVE
                     sdram_addr = bus_req_address[`SDRAM_ROW_RANGE];
@@ -187,14 +201,16 @@ module sdram_access (
             // S_ACTIVE
             state[S_ACTIVE]: begin
                 if (counter_fire) begin
+                    // common signal
+                    sdram_addr = 0;
+                    sdram_addr[SDRAM_COL-1:0] = req_address[`SDRAM_COL_RANGE];
+                    sdram_ba = req_address[`SDRAM_BANK_RANGE];
+                    sdram_dqm = ~req_byteenable;
+                    counter_load = 1'b1;
                     if (req_is_write) begin // -> Write
                         {sdram_cs_n, sdram_ras_n, sdram_cas_n, sdram_we_n} = SDRAM_CMD_WRITE; // WRITE
-                        sdram_addr = 0;
-                        sdram_addr[SDRAM_COL-1:0] = req_address[`SDRAM_COL_RANGE];
                         sdram_dq_en = 1'b1;
                         sdram_dq_write = req_writedata; // only write 1 data
-                        sdram_dqm = req_byteenable;
-                        counter_load = 1'b1;
                         counter_value = SDRAM_BL - 1;
                     end
                     else begin  // -> Read
