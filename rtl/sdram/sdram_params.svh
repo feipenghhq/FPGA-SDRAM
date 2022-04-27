@@ -45,7 +45,7 @@
     localparam AVS_BYTE   = AVS_DW/8;
     localparam SDRAM_BYTE = SDRAM_DATA / 8;
 
-    localparam tREFS =  tREF * 10000000 / (1 << SDRAM_ROW); // time to issue refresh command (ns)
+    localparam tREFS =  tREF * 1_000_000 / (1 << SDRAM_ROW); // time to issue refresh command (ns)
 
     // Convert Timing parameters to actual clock cycles
     localparam tINIT_OVH   = 100;       // Give some overhead cycle for initizaltion
@@ -73,6 +73,7 @@
     localparam CMD_CYCLE_WIDTH    = 4;
     localparam INIT_REF_CNT_WIDTH = $clog2(INIT_REF_CNT);
     localparam BURST_COUNT_WIDTH  = $clog2(SDRAM_BL+1);
+    localparam REF_CYCLE_WIDTH    = $clog2(tREFS+1);
 
     // Mode register value
     localparam MR_BURST_TYPE        = 0;
@@ -82,6 +83,7 @@
                                       SDRAM_BL == 4 ? 2 :
                                       SDRAM_BL == 8 ? 3 : 4 ;
 
+    localparam REF_THRESHOLD        = 20;
 
     // --------------------------------
     // SDRAM Command

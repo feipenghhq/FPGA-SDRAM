@@ -80,3 +80,9 @@ async def test_random(dut, it=100):
                 golden.append(write_record[addresses[idx-1]])
     await Timer(1, units="us")
     assert golden == env.avalon.readdata
+
+@cocotb.test()
+async def test_refresh(dut, it=100):
+    env = Env(dut, dut.clk, DW, AW)
+    await env.setup()
+    await Timer(1000, units="us")

@@ -67,6 +67,10 @@ module sdram_access (
     logic                           counter_load;
     logic [INIT_CYCLE_WIDTH-1:0]    counter_value;
 
+    reg [REF_CYCLE_WIDTH-1:0]       refresh_counter;
+    logic                           refresh_request;
+    logic                           refresh_counter_load;
+
     reg                             req_is_write;
     reg [AVS_AW-1:0]                req_address;
     reg [AVS_DW-1:0]                req_writedata;
@@ -77,18 +81,17 @@ module sdram_access (
     // --------------------------------
     // State Machine Declaration
     // --------------------------------
-    localparam S_IDLE           = 0,
-               S_ACTIVE         = 1,
-               S_ACTIVE_WAIT    = 2,
-               S_READ_WAIT      = 3,
-               S_READ           = 4,
-               S_WRITE          = 5,
-               S_WRITE_WAIT     = 6,
-               S_PRECHARGE      = 7,
-               S_PRECHARGE_WAIT = 8,
-               S_REFRESH        = 9,
-               S_REFRESH_WAIT   = 10;
-    localparam STATE_WIDTH      = S_REFRESH_WAIT + 1;
+    localparam S_WAIT_INIT      = 0,
+               S_IDLE           = S_WAIT_INIT       + 1,
+               S_ACTIVE         = S_IDLE            + 1,
+               S_ACTIVE_WAIT    = S_ACTIVE          + 1,
+               S_READ_WAIT      = S_ACTIVE_WAIT     + 1,
+               S_READ           = S_READ_WAIT       + 1,
+               S_WRITE          = S_READ            + 1,
+               S_WRITE_WAIT     = S_WRITE           + 1,
+               S_PRECHARGE      = S_WRITE_WAIT      + 1,
+               S_REFRESH        = S_PRECHARGE       + 1,
+               STATE_WIDTH      = S_REFRESH         + 1;
     reg [STATE_WIDTH-1:0]   state;
     logic [STATE_WIDTH-1:0] state_next;
 
@@ -98,6 +101,7 @@ module sdram_access (
 
     assign counter_fire = counter == 0;
     assign req_fire = bus_req_valid & bus_req_ready;
+    assign refresh_request = refresh_counter < REF_THRESHOLD;
 
     always @(posedge clk) begin
         if (req_fire) begin
@@ -111,10 +115,14 @@ module sdram_access (
     always @(posedge clk) begin
         if (reset) begin
             counter <= 'b0;
+            refresh_counter <= 'b0;
         end
         else begin
             if (counter_load) counter <= counter_value;
             else if (counter != 0) counter <= counter - 1'b1;
+
+            if (refresh_counter_load) refresh_counter <= tREFS;
+            else if (refresh_counter != 0) refresh_counter <= refresh_counter - 1'b1;
         end
     end
 
@@ -131,10 +139,21 @@ module sdram_access (
     always @* begin
         state_next = 0;
         case(1)
+            // S_WAIT_INIT
+            state[S_WAIT_INIT]: begin
+                if (init_done)          state_next[S_IDLE] = 1'b1;
+                else                    state_next[S_WAIT_INIT] = 1'b1;
+            end
             // S_IDLE
             state[S_IDLE]: begin
-                if (bus_req_valid)      state_next[S_ACTIVE] = 1'b1;
+                if (refresh_request)    state_next[S_REFRESH] = 1'b1;
+                else if (bus_req_valid) state_next[S_ACTIVE] = 1'b1;
                 else                    state_next[S_IDLE] = 1'b1;
+            end
+            // S_REFRESH
+            state[S_REFRESH]: begin
+                if (counter_fire)       state_next[S_IDLE] = 1'b1;
+                else                    state_next[S_REFRESH] = 1'b1;
             end
             // S_ACTIVE
             state[S_ACTIVE]: begin
@@ -201,17 +220,32 @@ module sdram_access (
         bus_resp_readdata = 'x;
         bus_resp_valid = 1'b0;
 
+        refresh_counter_load = 1'b0;
+
         case(1)
+            // S_WAIT_INIT
+            state[S_WAIT_INIT]: begin
+                if (init_done)  refresh_counter_load = 1'b1;
+            end
             // S_IDLE
             state[S_IDLE]: begin
                 bus_req_ready = 1'b1;
-                if (bus_req_valid) begin
+                if (refresh_request) begin
+                    {sdram_cs_n, sdram_ras_n, sdram_cas_n, sdram_we_n} = SDRAM_CMD_REFRESH; // REFRESH
+                    counter_load = 1'b1;
+                    counter_value = tRFC_CYCLE - 1;
+                end
+                else if (bus_req_valid) begin
                     {sdram_cs_n, sdram_ras_n, sdram_cas_n, sdram_we_n} = SDRAM_CMD_ACTIVE; // ACTIVE
                     sdram_addr = bus_req_address[`SDRAM_ROW_RANGE];
                     sdram_ba = bus_req_address[`SDRAM_BANK_RANGE];
                     counter_load = 1'b1;
                     counter_value = tRCD_CYCLE - 1;
                 end
+            end
+            // S_REFRESH
+            state[S_REFRESH]: begin
+                refresh_counter_load = counter_fire;
             end
             // S_ACTIVE
             state[S_ACTIVE]: begin
