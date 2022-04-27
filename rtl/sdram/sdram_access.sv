@@ -10,53 +10,46 @@
  * ---------------------------------------------------------------
  */
 
-module sdram_access (
-    // SDRAM signal
-    sdram_cs_n, sdram_ras_n, sdram_cas_n, sdram_we_n, sdram_addr, sdram_ba,
-    sdram_dq_read, sdram_dq_write, sdram_dq_en, sdram_dqm, sdram_cke,
-    // input request signal
-    bus_req_valid, bus_req_write, bus_req_address, bus_req_writedata, bus_req_byteenable, bus_req_ready,
+module sdram_access #(
+    `include "sdram_params.svh"
+) (
+    input  logic                            reset,
+    input  logic                            clk,
+    input  logic                            init_done,
+
+    // SDRAM signa,
+    output logic                            sdram_cs_n,
+    output logic                            sdram_ras_n,
+    output logic                            sdram_cas_n,
+    output logic                            sdram_we_n,
+    output logic                            sdram_cke,
+    output logic [SDRAM_ROW-1:0]            sdram_addr,
+    output logic [SDRAM_BA-1:0]   sdram_ba,
+    output logic [SDRAM_DATA-1:0]           sdram_dq_write,
+    output logic [SDRAM_DATA/8-1:0]         sdram_dqm,
+    output logic                            sdram_dq_en,
+    input  logic [SDRAM_DATA-1:0]           sdram_dq_read,
+
+    // input request signa,
+    input  logic                            bus_req_valid,
+    input  logic                            bus_req_write,
+    input  logic [AVS_AW-1:0]               bus_req_address,
+    input  logic [AVS_DW-1:0]               bus_req_writedata,
+    input  logic [AVS_BYTE-1:0]             bus_req_byteenable,
+    output logic                            bus_req_ready,
+
     // input response signal
-    bus_resp_valid, bus_resp_readdata,
-    // other signal
-    init_done,
-    reset, clk
+    output logic                            bus_resp_valid,
+    output logic [AVS_DW-1:0]               bus_resp_readdata
 );
 
-    `include "sdram_params.svh"
+    `include "sdram_localparams.svh"
 
     // --------------------------------
     // IO Ports
     // --------------------------------
 
-    input  logic                            reset;
-    input  logic                            clk;
-    input  logic                            init_done;
 
-    // SDRAM signal
-    output logic                            sdram_cs_n;
-    output logic                            sdram_ras_n;
-    output logic                            sdram_cas_n;
-    output logic                            sdram_we_n;
-    output logic                            sdram_cke;
-    output logic [SDRAM_ADDR_WIDTH-1:0]     sdram_addr;
-    output logic [SDRAM_BANK_WIDTH-1:0]     sdram_ba;
-    output logic [SDRAM_DATA_WIDTH-1:0]     sdram_dq_write;
-    output logic [SDRAM_DQM_WIDTH-1:0]      sdram_dqm;
-    output logic                            sdram_dq_en;
-    input  logic [SDRAM_DATA_WIDTH-1:0]     sdram_dq_read;
-
-    // input request signal
-    input  logic                            bus_req_valid;
-    input  logic                            bus_req_write;
-    input  logic [AVS_AW-1:0]               bus_req_address;
-    input  logic [AVS_DW-1:0]               bus_req_writedata;
-    input  logic [AVS_BYTE-1:0]             bus_req_byteenable;
-    output logic                            bus_req_ready;
-
-    // input response signal
-    output logic                            bus_resp_valid;
-    output logic [AVS_DW-1:0]               bus_resp_readdata;
 
     // --------------------------------
     // Signal Declaration
@@ -77,6 +70,12 @@ module sdram_access (
     reg [AVS_BYTE-1:0]              req_byteenable;
 
     logic                           req_fire;
+
+    // Address Range
+
+    `define SDRAM_COL_RANGE         SDRAM_COL+SDRAM_BYTE_WIDTH-1:SDRAM_BYTE_WIDTH
+    `define SDRAM_ROW_RANGE         SDRAM_ROW+SDRAM_COL+SDRAM_BYTE_WIDTH-1:SDRAM_COL+SDRAM_BYTE_WIDTH
+    `define SDRAM_BANK_RANGE        AVS_AW-1:SDRAM_ROW+SDRAM_COL+SDRAM_BYTE_WIDTH
 
     // --------------------------------
     // State Machine Declaration

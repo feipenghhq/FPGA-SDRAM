@@ -8,33 +8,23 @@
  * ---------------------------------------------------------------
  */
 
-module sdram_init(
-    // SDRAM signal
-    sdram_cs_n, sdram_ras_n, sdram_cas_n, sdram_we_n, sdram_cke, sdram_addr,
-    // other signal
-    init_done,
-    reset, clk
+module sdram_init #(
+    `include "sdram_params.svh"
+) (
+    input  logic                            reset,
+    input  logic                            clk,
+    output logic                            init_done,
 
+    // sdram port,
+    output logic                            sdram_cs_n,
+    output logic                            sdram_ras_n,
+    output logic                            sdram_cas_n,
+    output logic                            sdram_we_n,
+    output logic                            sdram_cke,
+    output logic [SDRAM_ROW-1:0]            sdram_addr
 );
 
-    `include "sdram_params.svh"
-
-    // --------------------------------
-    // IO Ports
-    // --------------------------------
-
-    input  logic                            reset;
-    input  logic                            clk;
-    output logic                            init_done;
-
-    // sdram ports
-    output logic                            sdram_cs_n;
-    output logic                            sdram_ras_n;
-    output logic                            sdram_cas_n;
-    output logic                            sdram_we_n;
-    output logic                            sdram_cke;
-    output logic [SDRAM_ADDR_WIDTH-1:0]     sdram_addr;
-
+    `include "sdram_localparams.svh"
 
     // --------------------------------
     // Signal Declaration

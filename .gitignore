@@ -6,3 +6,27 @@ __pycache__
 
 # emacs
 *#
+
+# quartus
+*.qsys_edit
+*.bak
+*.qws
+*.qpf
+*.sopcinfo
+*.qsf
+*db
+*tmp
+quartus
+
+
+# qsys
+*.cmp
+*.html
+*.sopcinfo
+*.rpt
+*.lck
+.qsys_edit
+
+# software
+app
+bsp

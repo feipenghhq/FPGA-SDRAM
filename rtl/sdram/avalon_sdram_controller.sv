@@ -11,51 +11,39 @@
 module avalon_sdram_controller #(
     parameter CMD_FIFO_SIZE     = 4,
     parameter WRITE_FIFO_SIZE   = 4,
-    parameter READ_FIFO_SIZE    = 4
+    parameter READ_FIFO_SIZE    = 4,
+    `include "sdram_params.svh"
 ) (
-    // SDRAM signal
-    sdram_cs_n, sdram_ras_n, sdram_cas_n, sdram_we_n, sdram_addr, sdram_ba,
-    sdram_dq_read, sdram_dq_write, sdram_dq_en, sdram_dqm, sdram_cke,
-    // Avalon interface
-    avs_read, avs_write, avs_address, avs_writedata, avs_byteenable, avs_readdata,
-    avs_waitrequest, avs_readdatavalid,
-    // reset and clock
-    reset, clk
+    output reg                          sdram_cs_n,
+    output reg                          sdram_ras_n,
+    output reg                          sdram_cas_n,
+    output reg                          sdram_we_n,
+    output reg                          sdram_cke,
+    output reg [SDRAM_ROW-1:0]          sdram_addr,
+    output reg [SDRAM_BA-1:0]           sdram_ba,
+    output reg [SDRAM_DATA-1:0]         sdram_dq_write,
+    output reg [SDRAM_DATA/8-1:0]       sdram_dqm,
+    output reg                          sdram_dq_en,
+    input      [SDRAM_DATA-1:0]         sdram_dq_read,
+
+    input                               avs_read,
+    input                               avs_write,
+    input  [AVS_AW-1:0]                 avs_address,
+    input  [AVS_DW-1:0]                 avs_writedata,
+    input  [AVS_DW/8-1:0]               avs_byteenable,
+    output [AVS_DW-1:0]                 avs_readdata,
+    output                              avs_waitrequest,
+    output                              avs_readdatavalid,
+
+    input                               reset,
+    input                               clk
 );
 
-    `include "sdram_params.svh"
+    `include "sdram_localparams.svh"
 
-    localparam CMD_FIFO_WIDTH = 1 + AVS_AW + AVS_BYTE;
-    localparam WRITE_FIFO_WIDTH = SDRAM_DATA_WIDTH;
-    localparam READ_FIFO_WIDTH = SDRAM_DATA_WIDTH;
-
-    // --------------------------------
-    // IO Ports
-    // --------------------------------
-
-    output reg                          sdram_cs_n;
-    output reg                          sdram_ras_n;
-    output reg                          sdram_cas_n;
-    output reg                          sdram_we_n;
-    output reg                          sdram_cke;
-    output reg [SDRAM_ADDR_WIDTH-1:0]   sdram_addr;
-    output reg [SDRAM_BANK_WIDTH-1:0]   sdram_ba;
-    output reg [SDRAM_DATA_WIDTH-1:0]   sdram_dq_write;
-    output reg [SDRAM_DQM_WIDTH-1:0]    sdram_dqm;
-    output reg                          sdram_dq_en;
-    input [SDRAM_DATA_WIDTH-1:0]        sdram_dq_read;
-
-    input                               avs_read;
-    input                               avs_write;
-    input  [AVS_AW-1:0]                 avs_address;
-    input  [AVS_DW-1:0]                 avs_writedata;
-    input  [AVS_BYTE-1:0]               avs_byteenable;
-    output [AVS_DW-1:0]                 avs_readdata;
-    output                              avs_waitrequest;
-    output                              avs_readdatavalid;
-
-    input                               reset;
-    input                               clk;
+    localparam CMD_FIFO_WIDTH   = 1 + AVS_AW + AVS_BYTE;
+    localparam WRITE_FIFO_WIDTH = SDRAM_DATA;
+    localparam READ_FIFO_WIDTH  = SDRAM_DATA;
 
     // --------------------------------
     // Signal Declaration
@@ -67,18 +55,18 @@ module avalon_sdram_controller #(
     logic		                        init_sdram_cs_n;
     logic		                        init_sdram_ras_n;
     logic		                        init_sdram_we_n;
-    logic [SDRAM_ADDR_WIDTH-1:0]		init_sdram_addr;
+    logic [SDRAM_ROW-1:0]		        init_sdram_addr;
 
 
-    logic [SDRAM_DATA_WIDTH-1:0]        access_sdram_dq_read;
-    logic [SDRAM_ADDR_WIDTH-1:0]        access_sdram_addr;
-    logic [SDRAM_BANK_WIDTH-1:0]        access_sdram_ba;
+    logic [SDRAM_DATA-1:0]              access_sdram_dq_read;
+    logic [SDRAM_ROW-1:0]               access_sdram_addr;
+    logic [SDRAM_BA-1:0]                access_sdram_ba;
     logic		                        access_sdram_cas_n;
     logic		                        access_sdram_cke;
     logic		                        access_sdram_cs_n;
     logic		                        access_sdram_dq_en;
-    logic [SDRAM_DATA_WIDTH-1:0]        access_sdram_dq_write;
-    logic [SDRAM_DQM_WIDTH-1:0]         access_sdram_dqm;
+    logic [SDRAM_DATA-1:0]              access_sdram_dq_write;
+    logic [SDRAM_DATA/8-1:0]            access_sdram_dqm;
     logic		                        access_sdram_ras_n;
     logic		                        access_sdram_we_n;
 
@@ -205,7 +193,7 @@ module avalon_sdram_controller #(
      .sdram_cas_n                       (init_sdram_cas_n),      // Templated
      .sdram_we_n                        (init_sdram_we_n),       // Templated
      .sdram_cke                         (init_sdram_cke),        // Templated
-     .sdram_addr                        (init_sdram_addr[SDRAM_ADDR_WIDTH-1:0]), // Templated
+     .sdram_addr                        (init_sdram_addr[SDRAM_ROW-1:0]), // Templated
      // Inputs
      .reset                             (reset),
      .clk                               (clk));
@@ -225,10 +213,10 @@ module avalon_sdram_controller #(
      .sdram_cas_n                       (access_sdram_cas_n),    // Templated
      .sdram_we_n                        (access_sdram_we_n),     // Templated
      .sdram_cke                         (access_sdram_cke),      // Templated
-     .sdram_addr                        (access_sdram_addr[SDRAM_ADDR_WIDTH-1:0]), // Templated
-     .sdram_ba                          (access_sdram_ba[SDRAM_BANK_WIDTH-1:0]), // Templated
-     .sdram_dq_write                    (access_sdram_dq_write[SDRAM_DATA_WIDTH-1:0]), // Templated
-     .sdram_dqm                         (access_sdram_dqm[SDRAM_DQM_WIDTH-1:0]), // Templated
+     .sdram_addr                        (access_sdram_addr[SDRAM_ROW-1:0]), // Templated
+     .sdram_ba                          (access_sdram_ba[SDRAM_BA-1:0]), // Templated
+     .sdram_dq_write                    (access_sdram_dq_write[SDRAM_DATA-1:0]), // Templated
+     .sdram_dqm                         (access_sdram_dqm[SDRAM_DATA/8-1:0]), // Templated
      .sdram_dq_en                       (access_sdram_dq_en),    // Templated
      .bus_req_ready                     (bus_req_ready),
      .bus_resp_valid                    (bus_resp_valid),
@@ -237,7 +225,7 @@ module avalon_sdram_controller #(
      .reset                             (reset),
      .clk                               (clk),
      .init_done                         (init_done),
-     .sdram_dq_read                     (access_sdram_dq_read[SDRAM_DATA_WIDTH-1:0]), // Templated
+     .sdram_dq_read                     (access_sdram_dq_read[SDRAM_DATA-1:0]), // Templated
      .bus_req_valid                     (bus_req_valid),
      .bus_req_write                     (bus_req_write),
      .bus_req_address                   (bus_req_address[AVS_AW-1:0]),
@@ -316,6 +304,19 @@ module avalon_sdram_controller #(
         initial begin
             display_parameter();
         end
+
+        // Report the parameters
+        task display_parameter;
+            $display("%m :    SDRAM Timing:");
+            $display("%m :    tINIT_CYCLE = %d", tINIT_CYCLE);
+            $display("%m :    tRAS_CYCLE  = %d", tRAS_CYCLE);
+            $display("%m :    tRC_CYCLE   = %d", tRC_CYCLE);
+            $display("%m :    tRCD_CYCLE  = %d", tRCD_CYCLE);
+            $display("%m :    tRFC_CYCLE  = %d", tRFC_CYCLE);
+            $display("%m :    tRP_CYCLE   = %d", tRP_CYCLE);
+            $display("%m :    tRRD_CYCLE  = %d", tRRD_CYCLE);
+            $display("%m :    tREFS_CYCLE = %d", tREFS_CYCLE);
+        endtask
     `endif
 
 endmodule
