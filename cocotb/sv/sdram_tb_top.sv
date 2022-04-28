@@ -21,14 +21,6 @@ module sdram_top (
   input               reset
 );
 
-  wire     [15:0]   sdram_dq_read;
-  wire     [15:0]   sdram_dq_write;
-  wire              sdram_dq_en;
-
-
-  assign sdram_dq      = sdram_dq_en ? sdram_dq_write : 16'bz;
-  assign sdram_dq_read = sdram_dq;
-
   avalon_sdram_controller u_avalon_sdram_controller(.*);
 
 endmodule

@@ -12,32 +12,32 @@
     // Internal parameters
     // --------------------------------
 
-    localparam AVS_BYTE     = AVS_DW/8;
-    localparam SDRAM_BYTE   = SDRAM_DATA / 8;
-    localparam tREFS        = tREF * 1_000_000 / (1 << SDRAM_ROW); // time to issue refresh command (ns)
+    localparam AVS_BYTE             = AVS_DW/8;
+    localparam SDRAM_BYTE           = SDRAM_DATA / 8;
+    localparam tREFS                = tREF * 1_000_000 / (1 << SDRAM_ROW); // time to issue refresh command (ns)
 
     // Convert Timing parameters to actual clock cycles
-    localparam tINIT_OVH    = 100;       // Give some overhead cycle for initizaltion
-    localparam tINIT_CYCLE  = calculate_cycle(tINIT * 1000) + tINIT_OVH;
-    localparam tRAS_CYCLE   = calculate_cycle(tRAS);     // ACTIVE-to-PRECHARGE command (ns)
-    localparam tRC_CYCLE    = calculate_cycle(tRC);      // ACTIVE-to-ACTIVE command period (ns)
-    localparam tRCD_CYCLE   = calculate_cycle(tRCD);     // ACTIVE-to-READ or WRITE delay (ns)
-    localparam tRFC_CYCLE   = calculate_cycle(tRFC);     // AUTO REFRESH period (ns)
-    localparam tRP_CYCLE    = calculate_cycle(tRP);      // PRECHARGE command period (ns)
-    localparam tRRD_CYCLE   = calculate_cycle(tRRD);     // ACTIVE bank a to ACTIVE bank b command (ns)
-    localparam tREFS_CYCLE  = calculate_cycle(tREFS);    // Refresh period (ns)
-    localparam tMRD_CYCLE   = 3;                         // load mode register cycle. fixed to 3
-    localparam tWR_CYCLE    = CLK_PERIOD < 15 ? 2 : 1;
-    localparam WRITE_CYCLE  = tWR_CYCLE + SDRAM_BL;      // Actual write cycle
-    localparam READ_CYCLE   = CL + SDRAM_BL;             // Actual read cycle
+    localparam tINIT_OVH            = 100;       // Give some overhead cycle for initizaltion
+    localparam tINIT_CYCLE          = calculate_cycle(tINIT * 1000) + tINIT_OVH;
+    localparam tRAS_CYCLE           = calculate_cycle(tRAS);     // ACTIVE-to-PRECHARGE command (ns)
+    localparam tRC_CYCLE            = calculate_cycle(tRC);      // ACTIVE-to-ACTIVE command period (ns)
+    localparam tRCD_CYCLE           = calculate_cycle(tRCD);     // ACTIVE-to-READ or WRITE delay (ns)
+    localparam tRFC_CYCLE           = calculate_cycle(tRFC);     // AUTO REFRESH period (ns)
+    localparam tRP_CYCLE            = calculate_cycle(tRP);      // PRECHARGE command period (ns)
+    localparam tRRD_CYCLE           = calculate_cycle(tRRD);     // ACTIVE bank a to ACTIVE bank b command (ns)
+    localparam tREFS_CYCLE          = calculate_cycle(tREFS);    // Refresh period (ns)
+    localparam tMRD_CYCLE           = 3;                         // load mode register cycle. fixed to 3
+    localparam tWR_CYCLE            = CLK_PERIOD < 15 ? 2 : 1;
+    localparam WRITE_CYCLE          = tWR_CYCLE + SDRAM_BL;      // Actual write cycle
+    localparam READ_CYCLE           = CL + SDRAM_BL;             // Actual read cycle
 
     // Signal width
-    localparam SDRAM_BYTE_WIDTH   = $clog2(SDRAM_BYTE);
-    localparam INIT_CYCLE_WIDTH   = $clog2(tINIT_CYCLE+1);
-    localparam CMD_CYCLE_WIDTH    = 4;
-    localparam INIT_REF_CNT_WIDTH = $clog2(INIT_REF_CNT);
-    localparam BURST_COUNT_WIDTH  = $clog2(SDRAM_BL+1);
-    localparam REF_CYCLE_WIDTH    = $clog2(tREFS+1);
+    localparam SDRAM_BYTE_WIDTH     = $clog2(SDRAM_BYTE);
+    localparam INIT_CYCLE_WIDTH     = $clog2(tINIT_CYCLE+1);
+    localparam CMD_CYCLE_WIDTH      = 4;
+    localparam INIT_REF_CNT_WIDTH   = $clog2(INIT_REF_CNT);
+    localparam BURST_COUNT_WIDTH    = $clog2(SDRAM_BL+1);
+    localparam REF_CYCLE_WIDTH      = $clog2(tREFS_CYCLE+1);
 
     // Mode register value
     localparam MR_BURST_TYPE        = 0;

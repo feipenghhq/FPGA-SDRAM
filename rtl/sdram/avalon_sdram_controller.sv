@@ -9,10 +9,35 @@
  */
 
 module avalon_sdram_controller #(
+    // FIFO Size
     parameter CMD_FIFO_SIZE     = 4,
     parameter WRITE_FIFO_SIZE   = 4,
     parameter READ_FIFO_SIZE    = 4,
-    `include "sdram_params.svh"
+
+    // Avalon Bus Parameter
+    parameter AVS_DW        = 16,     // Avalon data width
+    parameter AVS_AW        = 25,     // Avalon address width
+
+    // SDRAM Architecture
+    parameter SDRAM_DATA    = 16,      // SDRAM data width
+    parameter SDRAM_BANK    = 4,       // SDRAM bank number
+    parameter SDRAM_ROW     = 13,      // SDRAM row number
+    parameter SDRAM_COL     = 9,       // SDRAM column number
+    parameter SDRAM_BA      = 2,       // SDRAM BA width
+    parameter SDRAM_BL      = 1,       // SDRAM burst length
+
+    // SDRAM Timing
+    parameter CLK_PERIOD    = 10,       // Clock period in ns
+    parameter INIT_REF_CNT  = 2,        // Refresh count in initialization process
+    parameter CL            = 2,        // CAS latency (cycle)
+    parameter tINIT         = 100,      // Initialization time (us)
+    parameter tRAS          = 42,       // ACTIVE-to-PRECHARGE command (ns)
+    parameter tRC           = 60,       // ACTIVE-to-ACTIVE command period (ns)
+    parameter tRCD          = 18,       // ACTIVE-to-READ or WRITE delay (ns)
+    parameter tRFC          = 60,       // AUTO REFRESH period (ns)
+    parameter tRP           = 18,       // PRECHARGE command period (ns)
+    parameter tRRD          = 12,       // ACTIVE bank a to ACTIVE bank b command (ns)
+    parameter tREF          = 64        // Refresh period (ms)
 ) (
     output reg                          sdram_cs_n,
     output reg                          sdram_ras_n,
@@ -21,10 +46,9 @@ module avalon_sdram_controller #(
     output reg                          sdram_cke,
     output reg [SDRAM_ROW-1:0]          sdram_addr,
     output reg [SDRAM_BA-1:0]           sdram_ba,
-    output reg [SDRAM_DATA-1:0]         sdram_dq_write,
     output reg [SDRAM_DATA/8-1:0]       sdram_dqm,
-    output reg                          sdram_dq_en,
-    input      [SDRAM_DATA-1:0]         sdram_dq_read,
+    inout      [SDRAM_DATA-1:0]         sdram_dq,
+
 
     input                               avs_read,
     input                               avs_write,
@@ -103,6 +127,10 @@ module avalon_sdram_controller #(
     logic                               write_fifo_empty;
     logic                               write_fifo_full;
 
+    logic [SDRAM_DATA-1:0]              sdram_dq_write;
+    logic                               sdram_dq_en;
+    logic [SDRAM_DATA-1:0]              sdram_dq_read;
+
     /*AUTOREG*/
 
     /*AUTOWIRE*/
@@ -112,6 +140,9 @@ module avalon_sdram_controller #(
     // --------------------------------
     // main Logic
     // --------------------------------
+
+    assign sdram_dq_read = sdram_dq;
+    assign sdram_dq = sdram_dq_en ? sdram_dq_write : 'z;
 
     assign cmd_fifo_push = (avs_write | avs_read) & ~cmd_fifo_full;
     assign cmd_fifo_pop = bus_req_ready & ~cmd_fifo_empty;
@@ -184,6 +215,27 @@ module avalon_sdram_controller #(
         );
     */
     sdram_init
+    #(/*AUTOINSTPARAM*/
+      // Parameters
+      .AVS_DW                           (AVS_DW),
+      .AVS_AW                           (AVS_AW),
+      .SDRAM_DATA                       (SDRAM_DATA),
+      .SDRAM_BANK                       (SDRAM_BANK),
+      .SDRAM_ROW                        (SDRAM_ROW),
+      .SDRAM_COL                        (SDRAM_COL),
+      .SDRAM_BA                         (SDRAM_BA),
+      .SDRAM_BL                         (SDRAM_BL),
+      .CLK_PERIOD                       (CLK_PERIOD),
+      .INIT_REF_CNT                     (INIT_REF_CNT),
+      .CL                               (CL),
+      .tINIT                            (tINIT),
+      .tRAS                             (tRAS),
+      .tRC                              (tRC),
+      .tRCD                             (tRCD),
+      .tRFC                             (tRFC),
+      .tRP                              (tRP),
+      .tRRD                             (tRRD),
+      .tREF                             (tREF))
     u_sdram_init
     (/*AUTOINST*/
      // Outputs
@@ -205,6 +257,27 @@ module avalon_sdram_controller #(
         );
     */
     sdram_access
+    #(/*AUTOINSTPARAM*/
+      // Parameters
+      .AVS_DW                           (AVS_DW),
+      .AVS_AW                           (AVS_AW),
+      .SDRAM_DATA                       (SDRAM_DATA),
+      .SDRAM_BANK                       (SDRAM_BANK),
+      .SDRAM_ROW                        (SDRAM_ROW),
+      .SDRAM_COL                        (SDRAM_COL),
+      .SDRAM_BA                         (SDRAM_BA),
+      .SDRAM_BL                         (SDRAM_BL),
+      .CLK_PERIOD                       (CLK_PERIOD),
+      .INIT_REF_CNT                     (INIT_REF_CNT),
+      .CL                               (CL),
+      .tINIT                            (tINIT),
+      .tRAS                             (tRAS),
+      .tRC                              (tRC),
+      .tRCD                             (tRCD),
+      .tRFC                             (tRFC),
+      .tRP                              (tRP),
+      .tRRD                             (tRRD),
+      .tREF                             (tREF))
     u_sdram_access
     (/*AUTOINST*/
      // Outputs

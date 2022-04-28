@@ -31,7 +31,7 @@ set_module_property EDITABLE true
 set_module_property ANALYZE_HDL AUTO
 set_module_property REPORT_TO_TALKBACK false
 set_module_property ALLOW_GREYBOX_GENERATION false
-
+set_module_property VALIDATION_CALLBACK validate
 
 #
 # file sets
@@ -44,7 +44,6 @@ add_fileset_file sdram_access.sv SYSTEM_VERILOG PATH sdram_access.sv
 add_fileset_file sdram_fifo.sv SYSTEM_VERILOG PATH sdram_fifo.sv
 add_fileset_file sdram_init.sv SYSTEM_VERILOG PATH sdram_init.sv
 add_fileset_file sdram_localparams.svh SYSTEM_VERILOG_INCLUDE PATH sdram_localparams.svh
-add_fileset_file sdram_params.svh SYSTEM_VERILOG_INCLUDE PATH sdram_params.svh
 
 
 #
@@ -128,13 +127,6 @@ set_parameter_property SDRAM_BL TYPE INTEGER
 set_parameter_property SDRAM_BL UNITS None
 set_parameter_property SDRAM_BL ALLOWED_RANGES {1 2 4 8}
 set_parameter_property SDRAM_BL HDL_PARAMETER true
-add_parameter CLK_PERIOD INTEGER 10
-set_parameter_property CLK_PERIOD DEFAULT_VALUE 10
-set_parameter_property CLK_PERIOD DISPLAY_NAME "Clock Period"
-set_parameter_property CLK_PERIOD TYPE INTEGER
-set_parameter_property CLK_PERIOD UNITS Nanoseconds
-set_parameter_property CLK_PERIOD ALLOWED_RANGES 1:100000
-set_parameter_property CLK_PERIOD HDL_PARAMETER true
 add_parameter INIT_REF_CNT INTEGER 2
 set_parameter_property INIT_REF_CNT DEFAULT_VALUE 2
 set_parameter_property INIT_REF_CNT DISPLAY_NAME "Number of refresh operation in initialization process"
@@ -158,7 +150,7 @@ set_parameter_property tINIT ALLOWED_RANGES 1:1000
 set_parameter_property tINIT HDL_PARAMETER true
 add_parameter tRAS INTEGER 42
 set_parameter_property tRAS DEFAULT_VALUE 42
-set_parameter_property tRAS DISPLAY_NAME " ACTIVE-to-PRECHARGE command (tRAS)"
+set_parameter_property tRAS DISPLAY_NAME "ACTIVE-to-PRECHARGE command (tRAS)"
 set_parameter_property tRAS TYPE INTEGER
 set_parameter_property tRAS UNITS Nanoseconds
 set_parameter_property tRAS ALLOWED_RANGES 1:1000
@@ -200,12 +192,30 @@ set_parameter_property tRRD ALLOWED_RANGES 1:1000
 set_parameter_property tRRD HDL_PARAMETER true
 add_parameter tREF INTEGER 64
 set_parameter_property tREF DEFAULT_VALUE 64
-set_parameter_property tREF DISPLAY_NAME "Refresh period( tREF)"
+set_parameter_property tREF DISPLAY_NAME "Refresh period (tREF)"
 set_parameter_property tREF TYPE INTEGER
 set_parameter_property tREF UNITS Milliseconds
 set_parameter_property tREF ALLOWED_RANGES 1:1000
 set_parameter_property tREF HDL_PARAMETER true
+add_parameter CLK_PERIOD INTEGER 10
+set_parameter_property CLK_PERIOD DEFAULT_VALUE 10
+set_parameter_property CLK_PERIOD DISPLAY_NAME "Clock Period"
+set_parameter_property CLK_PERIOD TYPE INTEGER
+set_parameter_property CLK_PERIOD UNITS Nanoseconds
+set_parameter_property CLK_PERIOD ALLOWED_RANGES 1:1000
+set_parameter_property CLK_PERIOD HDL_PARAMETER true
 
+
+# system info parameters
+add_parameter clockRate LONG
+set_parameter_property clockRate DEFAULT_VALUE {0}
+set_parameter_property clockRate DISPLAY_NAME {clockRate}
+set_parameter_property clockRate VISIBLE {0}
+set_parameter_property clockRate AFFECTS_GENERATION {1}
+set_parameter_property clockRate HDL_PARAMETER {0}
+set_parameter_property clockRate SYSTEM_INFO {clock_rate clk}
+set_parameter_property clockRate SYSTEM_INFO_TYPE {CLOCK_RATE}
+set_parameter_property clockRate SYSTEM_INFO_ARG {clk}
 
 #
 # display items
@@ -240,7 +250,7 @@ add_display_item "SDRAM Timing" tRFC PARAMETER ""
 add_display_item "SDRAM Timing" tRP PARAMETER ""
 add_display_item "SDRAM Timing" tRRD PARAMETER ""
 add_display_item "SDRAM Timing" tREF PARAMETER ""
-add_display_item Others CLK_PERIOD PARAMETER ""
+add_display_item "SDRAM Timing" CLK_PERIOD PARAMETER ""
 
 
 #
@@ -326,9 +336,11 @@ add_interface_port sdram sdram_cas_n export Output 1
 add_interface_port sdram sdram_we_n export Output 1
 add_interface_port sdram sdram_addr export Output SDRAM_ROW
 add_interface_port sdram sdram_ba export Output SDRAM_BA
-add_interface_port sdram sdram_dq_read export Input SDRAM_DATA
-add_interface_port sdram sdram_dq_write export Output SDRAM_DATA
-add_interface_port sdram sdram_dq_en export Output 1
+add_interface_port sdram sdram_dq export Bidir SDRAM_DATA
 add_interface_port sdram sdram_dqm export Output SDRAM_DATA/8
 add_interface_port sdram sdram_cke export Output 1
 
+proc validate {} {
+  set clockRate [ get_parameter_value CLK_PERIOD ]
+  set_module_assignment embeddedsw.CMacro.FREQ $clockRate
+}
