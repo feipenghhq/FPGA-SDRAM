@@ -20,12 +20,14 @@ quartus
 
 
 # qsys
+*.bsf
 *.cmp
 *.html
 *.sopcinfo
 *.rpt
 *.lck
 .qsys_edit
+*.stp
 
 # software
 app
