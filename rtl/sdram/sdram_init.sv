@@ -84,7 +84,7 @@ module sdram_init #(
     assign init_done = state[S_INIT_DONE];
 
     always @(posedge clk) begin
-        if (reset) counter <= tINIT_CYCLE;
+        if (reset) counter <= tINIT_CYCLE[INIT_CYCLE_WIDTH-1:0];
         else begin
             if (counter_load) counter <= counter_value;
             else if (!counter_fire) counter <= counter - 1'b1;
@@ -92,7 +92,7 @@ module sdram_init #(
     end
 
     always @(posedge clk) begin
-        if (reset) refresh_counter <= INIT_REF_CNT - 1;
+        if (reset) refresh_counter <= INIT_REF_CNT[INIT_REF_CNT_WIDTH-1:0] - 1;
         else begin
             if (!refresh_counter_fire && counter_fire) refresh_counter <= refresh_counter - 1'b1;
         end
@@ -152,21 +152,21 @@ module sdram_init #(
                     {sdram_cs_n, sdram_ras_n, sdram_cas_n, sdram_we_n} = SDRAM_CMD_PRECHARGE;   // PRECHARGE
                     sdram_addr[10] = 1'b1; // precharge all
                     counter_load = 1'b1;
-                    counter_value = tRP_CYCLE - 1;
+                    counter_value = tRP_CYCLE[INIT_CYCLE_WIDTH-1:0] - 1;
                 end
             end
             state[S_INIT_PRECHARGE]: begin
                 if (counter_fire && refresh_counter_fire) begin
                     {sdram_cs_n, sdram_ras_n, sdram_cas_n, sdram_we_n} = SDRAM_CMD_REFRESH;   // REFRESH
                     counter_load = 1'b1;
-                    counter_value = tRFC_CYCLE - 1;
+                    counter_value = tRFC_CYCLE[INIT_CYCLE_WIDTH-1:0] - 1;
                 end
             end
             state[S_INIT_REFRESH]: begin
                 if (counter_fire && !refresh_counter_fire)  begin
                     {sdram_cs_n, sdram_ras_n, sdram_cas_n, sdram_we_n} = SDRAM_CMD_REFRESH;   // REFRESH
                     counter_load = 1'b1;
-                    counter_value = tRFC_CYCLE - 1;
+                    counter_value = tRFC_CYCLE[INIT_CYCLE_WIDTH-1:0] - 1;
                 end
                 else if (counter_fire && refresh_counter_fire) begin
                     {sdram_cs_n, sdram_ras_n, sdram_cas_n, sdram_we_n} = SDRAM_CMD_LMR;   // LMR
@@ -176,7 +176,7 @@ module sdram_init #(
                     sdram_addr[8:7] = 0;
                     sdram_addr[9]   = MR_WRITE_BURST_MODE;
                     counter_load = 1'b1;
-                    counter_value = tMRD_CYCLE - 1;
+                    counter_value = tMRD_CYCLE[INIT_CYCLE_WIDTH-1:0] - 1;
                 end
             end
         endcase

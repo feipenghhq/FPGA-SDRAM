@@ -137,7 +137,7 @@ module sdram_access #(
             if (counter_load) counter <= counter_value;
             else if (counter != 0) counter <= counter - 1'b1;
 
-            if (refresh_counter_load) refresh_counter <= tREFS_CYCLE;
+            if (refresh_counter_load) refresh_counter <= tREFS_CYCLE[REF_CYCLE_WIDTH-1:0];
             else if (refresh_counter != 0) refresh_counter <= refresh_counter - 1'b1;
         end
     end
@@ -249,14 +249,14 @@ module sdram_access #(
                 if (refresh_request) begin
                     {sdram_cs_n, sdram_ras_n, sdram_cas_n, sdram_we_n} = SDRAM_CMD_REFRESH; // REFRESH
                     counter_load = 1'b1;
-                    counter_value = tRFC_CYCLE - 1;
+                    counter_value = tRFC_CYCLE[INIT_CYCLE_WIDTH-1:0] - 1;
                 end
                 else if (bus_req_valid) begin
                     {sdram_cs_n, sdram_ras_n, sdram_cas_n, sdram_we_n} = SDRAM_CMD_ACTIVE; // ACTIVE
                     sdram_addr = bus_req_address[`SDRAM_ROW_RANGE];
                     sdram_ba = bus_req_address[`SDRAM_BANK_RANGE];
                     counter_load = 1'b1;
-                    counter_value = tRCD_CYCLE - 1;
+                    counter_value = tRCD_CYCLE[INIT_CYCLE_WIDTH-1:0] - 1;
                 end
             end
             // S_REFRESH
@@ -276,11 +276,11 @@ module sdram_access #(
                         {sdram_cs_n, sdram_ras_n, sdram_cas_n, sdram_we_n} = SDRAM_CMD_WRITE; // WRITE
                         sdram_dq_en = 1'b1;
                         sdram_dq_write = req_writedata; // only write 1 data
-                        counter_value = SDRAM_BL - 1;
+                        counter_value = SDRAM_BL[INIT_CYCLE_WIDTH-1:0] - 1;
                     end
                     else begin  // -> Read
                         {sdram_cs_n, sdram_ras_n, sdram_cas_n, sdram_we_n} = SDRAM_CMD_READ; // READ
-                        counter_value = CL - 1;
+                        counter_value = CL[INIT_CYCLE_WIDTH-1:0] - 1;
                     end
                 end
             end
@@ -291,11 +291,11 @@ module sdram_access #(
                     {sdram_cs_n, sdram_ras_n, sdram_cas_n, sdram_we_n} = SDRAM_CMD_PRECHARGE; // PRECHARGE
                     sdram_addr[10] = 1'b1; // precharge all
                     counter_load = 1'b1;
-                    counter_value = tRP_CYCLE - 1;
+                    counter_value = tRP_CYCLE[INIT_CYCLE_WIDTH-1:0] - 1;
                 end
                 else begin  // goto S_WRITE_WAIT to wait tWR completion
                     counter_load = 1'b1;
-                    counter_value = tWR_CYCLE - 1;
+                    counter_value = tWR_CYCLE[INIT_CYCLE_WIDTH-1:0] - 1;
                 end
             end
             // S_WRITE_WAIT
@@ -304,14 +304,14 @@ module sdram_access #(
                     {sdram_cs_n, sdram_ras_n, sdram_cas_n, sdram_we_n} = SDRAM_CMD_PRECHARGE; // PRECHARGE
                     sdram_addr[10] = 1'b1; // precharge all
                     counter_load = 1'b1;
-                    counter_value = tRP_CYCLE - 1;
+                    counter_value = tRP_CYCLE[INIT_CYCLE_WIDTH-1:0] - 1;
                 end
             end
             // S_READ_WAIT
             state[S_READ_WAIT]: begin
                 if (counter_fire) begin
                     counter_load = 1'b1;
-                    counter_value = SDRAM_BL - 1;
+                    counter_value = SDRAM_BL[INIT_CYCLE_WIDTH-1:0] - 1;
                 end
             end
             // S_READ
@@ -323,7 +323,7 @@ module sdram_access #(
                     {sdram_cs_n, sdram_ras_n, sdram_cas_n, sdram_we_n} = SDRAM_CMD_PRECHARGE; // PRECHARGE
                     sdram_addr[10] = 1'b1; // precharge all
                     counter_load = 1'b1;
-                    counter_value = tRP_CYCLE - 1;
+                    counter_value = tRP_CYCLE[INIT_CYCLE_WIDTH-1:0] - 1;
                 end
             end
         endcase
