@@ -16,8 +16,7 @@ __pycache__
 *.qsf
 *db
 *tmp
-quartus
-
+outputs
 
 # qsys
 *.bsf

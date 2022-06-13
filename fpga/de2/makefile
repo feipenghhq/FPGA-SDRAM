@@ -4,7 +4,7 @@
 #########################################################
 
 GIT_ROOT = $(shell git rev-parse --show-toplevel)
-OUT_DIR  = $(shell pwd)/quartus
+OUT_DIR  = $(shell pwd)/outputs
 PWD		 = $(shell pwd)
 
 PROJECT  = de2
@@ -16,6 +16,6 @@ SDC	     += $(PWD)/src/de2.sdc
 PIN      += $(PWD)/src/DE2_pin_assignment.tcl
 
 QSYS_DIR 	= $(PWD)/src
-QSYS_SEARCH = $(GIT_ROOT)/rtl/sdram/*/**
+QSYS_SEARCH = $(GIT_ROOT)/rtl/sdram/**/*
 
-include $(GIT_ROOT)/fpga/scripts/makefile.intel.mk
+include $(GIT_ROOT)/tools/quartus/makefile.qsys.mk

@@ -13,7 +13,6 @@ SRC_RDIR	+= src
 BSP_DIR 	?= bsp
 APP_DIR 	?= app
 
-
 BSP_CMD    	?=
 
 all: compile
